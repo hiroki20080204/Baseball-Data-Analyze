@@ -4,6 +4,7 @@ from PIL import Image
 import pandas as pd
 import base64
 from io import BytesIO
+import os
 from data import players_dict as players
 
 st.set_page_config(page_title="Player Stat Card", layout="wide")
@@ -47,9 +48,14 @@ col1, col2, col3 = st.columns([1.2, 1.8, 1.6])
 
 # LEFT
 with col1:
-    st.image("mock_player_photo.png", use_container_width=True)
+    number = data.get('Number', 'mock')
+    img_path = f"img/{number}_player.png"
+    if not os.path.exists(img_path):
+        img_path = "img/mock.png"
+    st.image(img_path, use_container_width=True)
+    
     st.markdown(f"## 🧍 {selected_player}")
-    st.markdown(f"**#{data['Number']}**")
+    st.markdown(f"**#{number}**")
     st.markdown(f"**School:** {data['School']}")
     st.markdown(f"**Grade:** {data['Grade']}")
 
@@ -67,13 +73,23 @@ with col2:
     render_stat_card("🧤 Fielding Summary", data["Fielding"], order=["TC", "FPCT", "Assists", "Errors"], round_digits=3)
 
 # RIGHT
+number = data.get('Number', 'mock')
+spray_img_path = f"img/{number}_field.png"
+if not os.path.exists(spray_img_path):
+    spray_img_path = "img/mock_field.png"
+
+spray_img = Image.open(spray_img_path)
+buffer = BytesIO()
+spray_img.save(buffer, format="PNG")
+spray_img_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+# RIGHT
 with col3:
     st.markdown(f"""
     <div style='background-color:#f0ffff; padding:1rem; border-radius:10px; text-align: center;'>
         <h4 style='color:#000000;'>🗺️ Batting Spray Chart</h4>
-        <img src='data:image/png;base64,{img_b64}' alt='Defensive Positions'
-             style='width:100%; border-radius:8px; margin-top:1rem;'>
-        <div style='font-size: 0.9rem; color: #555;'>Defensive Positions</div>
+        <img src='data:image/png;base64,{spray_img_b64}' 
+        style='width:100%; border-radius:8px; margin-top:1rem;'>
     </div>
     """, unsafe_allow_html=True)
 
