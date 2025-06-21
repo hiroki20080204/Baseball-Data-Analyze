@@ -9,6 +9,17 @@ from data import players_dict as players
 
 st.set_page_config(page_title="Player Stat Card", layout="wide")
 
+def smart_round(val, digits=3):
+    try:
+        f = float(val)
+        rounded = round(f, digits)
+        # Drop trailing zero if third decimal is zero
+        if digits == 3 and str(rounded).endswith("0"):
+            return round(f, 2)
+        return rounded
+    except:
+        return val  # leave as-is if not a number
+
 def render_stat_card(title: str, stats: dict, order: list = None, round_digits: int = 3):
     stat_items = order if order else stats.keys()
     blocks = ""
@@ -54,23 +65,75 @@ with col1:
         img_path = "img/mock.png"
     st.image(img_path, use_container_width=True)
     
-    st.markdown(f"## 🧍 {selected_player}")
+    st.markdown(f"##  {selected_player}")
     st.markdown(f"**#{number}**")
     st.markdown(f"**School:** {data['School']}")
     st.markdown(f"**Grade:** {data['Grade']}")
 
 # MIDDLE
 with col2:
-    render_stat_card("📊 Key Stats", {
-        "AVG": data["Batting"]["AVG"],
-        "OPS": data["Batting"]["OPS"],
-        "ERA": data["Pitching"]["ERA"],
-        "WHIP": data["Pitching"]["WHIP"]
-    }, order=["AVG", "OPS", "ERA", "WHIP"], round_digits=3)
+    # === Derived fields with substitution logic ===
+    batting = data["Batting"]
+    pitching = data["Pitching"]
+    fielding = data["Fielding"]
 
-    render_stat_card("🥎 Batting Breakdown", data["Batting"], order=["AVG", "OPS", "SLG", "OBP"], round_digits=3)
-    render_stat_card("⚾ Pitching Breakdown", data["Pitching"], order=["IP", "GP", "ERA", "WHIP"], round_digits=2)
-    render_stat_card("🧤 Fielding Summary", data["Fielding"], order=["TC", "FPCT", "Assists", "Errors"], round_digits=3)
+    # Batting fallbacks
+    hr = batting.get("HR") or batting.get("XBH") or batting.get("2B") or 0
+    rbi = batting.get("RBI") or batting.get("R") or 0
+    sb = batting.get("SB") if batting.get("SB") not in [None, ""] else (1 if batting.get("SB%") and float(batting.get("SB%") or 0) > 0 else 0)
+    ops = batting.get("OPS") or round((float(batting.get("OBP") or 0) + float(batting.get("SLG") or 0)), 3)
+
+    # Pitching fallbacks
+    era = pitching.get("ERA") if pitching.get("ERA") not in [None, "-", ""] else pitching.get("FIP") or 0
+    so = pitching.get("SO") or pitching.get("K-L") or 0
+    bb = pitching.get("BB") or (
+        (float(pitching.get("BB/INN") or 0) * float(pitching.get("IP") or 0)) if pitching.get("BB/INN") and pitching.get("IP") else 0
+    )
+    whip = pitching.get("WHIP")
+    if whip in [None, "-", ""] and pitching.get("IP") not in [None, 0, "-", ""]:
+        whip = (float(pitching.get("BB") or 0) + float(pitching.get("H") or 0)) / float(pitching.get("IP"))
+    elif whip in [None, "-", ""]:
+        whip = 0
+
+    # Fielding fallbacks
+    fpct = fielding.get("FPCT")
+    if fpct in [None, "-", ""] and fielding.get("PO") and fielding.get("E") is not None:
+        fpct = float(fielding.get("PO")) / (float(fielding.get("PO")) + float(fielding.get("E")) + 1e-6)  # prevent div0
+    elif fpct in [None, "-", ""]:
+        fpct = 0
+
+    assists = fielding.get("Assists") or fielding.get("A") or 0
+    po = fielding.get("PO") or 0
+    errors = fielding.get("Errors") or fielding.get("E") or 0
+
+    render_stat_card("📊 Key Stats", {
+        "AVG": smart_round(batting.get("AVG", 0)),
+        "OPS": smart_round(ops),
+        "ERA": smart_round(era),
+        "WHIP": smart_round(whip)
+    }, order=["AVG", "OPS", "ERA", "WHIP"], round_digits=None)
+
+    render_stat_card("🥎 Batting Breakdown", {
+        "AVG": smart_round(batting.get("AVG", 0)),
+        "HR": smart_round(hr),
+        "RBI": smart_round(rbi),
+        "SB": smart_round(sb)
+    }, order=["AVG", "HR", "RBI", "SB"], round_digits=None)
+
+    render_stat_card("⚾ Pitching Breakdown", {
+        "ERA": smart_round(era),
+        "SO": smart_round(so),
+        "BB": smart_round(bb),
+        "WHIP": smart_round(whip)
+    }, order=["ERA", "SO", "BB", "WHIP"], round_digits=None)
+
+    render_stat_card("🧤 Fielding Summary", {
+        "FPCT": smart_round(fpct),
+        "PO": smart_round(po),
+        "Assists": smart_round(assists),
+        "Errors": smart_round(errors)
+    }, order=["FPCT", "PO", "Assists", "Errors"], round_digits=None)
+
 
 # RIGHT
 number = data.get('Number', 'mock')

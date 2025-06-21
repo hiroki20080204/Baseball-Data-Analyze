@@ -11,10 +11,19 @@ with open(csv_file_path, newline='', encoding='utf-8') as f:
 
 header = [h.strip() for h in header_row]
 
-# Define keys
-batting_keys = ["AVG", "OPS", "SLG", "OBP"]
-pitching_keys = ["IP", "GP", "ERA", "WHIP"]
-fielding_keys = ["TC", "FPCT", "Assists", "Errors"]
+# Define keys (must match fields used in your rendering fallback logic)
+batting_keys = [
+    "AVG", "OBP", "OPS", "SLG",
+    "HR", "XBH", "2B", "RBI", "R", "SB", "SB%", "BB"
+]
+
+pitching_keys = [
+    "ERA", "FIP", "SO", "K-L", "BB", "BB/INN", "IP", "WHIP", "H"
+]
+
+fielding_keys = [
+    "FPCT", "PO", "E", "Assists", "A", "Errors"
+]
 
 # Column indices
 first_idx = header.index("First")
