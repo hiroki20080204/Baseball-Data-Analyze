@@ -10,7 +10,7 @@ with open(csv_file_path, newline='', encoding='utf-8') as f:
     data_rows = reader[2:]  # Player data
 
 header = [h.strip() for h in header_row]
-
+position = [ "Catcher", "pitcher", ["Short Stop","Pitcher"], "Catcher", ["Third Base","Pitcher"], ["Pitcher","First Base","Center Field"], "Center Field", "Left Fireld", ["Third Base","First Base","Pitcher"], ["First Base","Pitcher"],["Second Base","Third Base"], ["Second Base","First Base"], ["Rgith Field","Pitcher"], "Center Field", "Pitcher"]
 # Define keys (must match fields used in your rendering fallback logic)
 batting_keys = [
     "AVG", "OBP", "OPS", "SLG",
