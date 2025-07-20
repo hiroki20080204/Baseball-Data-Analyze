@@ -25,6 +25,11 @@ fielding_keys = [
     "FPCT", "PO", "E", "Assists", "A", "Errors"
 ]
 
+grades = [
+    "10", "12", "11", "10", "11", "12", "10", "10", "11", "12", 
+    "11", "11", "10", "12", "11"
+]
+
 # Column indices
 first_idx = header.index("First")
 last_idx = header.index("Last")
@@ -39,7 +44,7 @@ players_dict = {}
 def safe_float(val):
     return float(val) if val.replace('.', '', 1).isdigit() else 0.0
 
-for row in data_rows:
+for i, row in enumerate(data_rows):
     if len(row) <= max(list(batting_indices.values()) + list(pitching_indices.values()) + list(fielding_indices.values())):
         continue
     first = row[first_idx].strip()
@@ -51,7 +56,7 @@ for row in data_rows:
     full_name = f"{first} {last}"
     players_dict[full_name] = {
         "School": "Cushing Academy",
-        "Grade": "-",
+        "Grade": grades[i] if i < len(grades) else "-",
         "Number": number,
         "Batting": {k: safe_float(row[i]) for k, i in batting_indices.items()},
         "Pitching": {k: safe_float(row[i]) for k, i in pitching_indices.items()},
